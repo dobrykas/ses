@@ -1,0 +1,2181 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Сессия МИИТа · Последний рубеж</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            overflow-x: hidden;
+        }
+
+        body {
+            background: #0b0b0e;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Press Start 2P', monospace;
+            padding: 8px;
+            margin: 0;
+            position: relative;
+            touch-action: manipulation;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-radial-gradient(circle at 20% 30%, rgba(0,0,0,0.2) 0px, transparent 4px);
+            pointer-events: none;
+            z-index: 999;
+            mix-blend-mode: overlay;
+        }
+
+        #game-container {
+            max-width: 820px;
+            width: 100%;
+            background: #12121a;
+            padding: 16px 14px 20px;
+            border: 3px solid #2c2c3a;
+            box-shadow: 0 0 30px rgba(0,0,0,0.9), inset 0 0 12px #1f1f2a;
+            border-radius: 24px;
+            position: relative;
+            backdrop-filter: blur(1px);
+            transition: all 0.2s;
+            margin: 0 auto;
+        }
+
+        .pixel-glitch {
+            text-shadow: 2px 2px 0 #3f0040, -1px -1px 0 #0a0a30;
+            letter-spacing: 2px;
+        }
+
+        h1, h2, h3 {
+            font-weight: normal;
+            text-transform: uppercase;
+            color: #b9b9d6;
+        }
+
+        .screen {
+            display: block;
+            width: 100%;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .hp-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 4px 0;
+            background: #1a1a26;
+            padding: 4px 10px;
+            border-radius: 30px;
+            border: 1px solid #33334a;
+        }
+        .hp-label {
+            font-size: 11px;
+            color: #bbbbdd;
+            min-width: 60px;
+        }
+        .hearts {
+            display: flex;
+            gap: 2px;
+            flex: 1;
+            flex-wrap: wrap;
+        }
+        .heart {
+            font-size: 18px;
+            transition: all 0.3s;
+        }
+        .heart.alive { color: #ff3b3b; text-shadow: 0 0 12px #ff0000; }
+        .heart.dead { color: #2a2a2a; text-shadow: none; }
+
+        .arena {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0 8px;
+            gap: 8px;
+        }
+
+        .portrait {
+            background: #1c1c2a;
+            padding: 10px 8px;
+            border-radius: 30px 30px 16px 16px;
+            border: 1px solid #3a3a50;
+            text-align: center;
+            flex: 1;
+            font-size: 11px;
+            color: #c0c0e0;
+            box-shadow: inset 0 -6px 0 #0b0b12;
+        }
+
+        .magazine {
+            background: #15151f;
+            padding: 10px 8px;
+            border-radius: 40px;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            border: 1px solid #2e2e44;
+            margin: 10px 0;
+        }
+        .bullet {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #2a2a3a;
+            border: 2px solid #3d3d5a;
+            box-shadow: inset 0 -4px 0 #0c0c14;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+        .bullet.green { background: #2b6b2b; border-color: #5a9a5a; }
+        .bullet.yellow { background: #7a7a2b; border-color: #baba4a; }
+        .bullet.red { background: #7a2b2b; border-color: #ba4a4a; }
+        .bullet.used { 
+            opacity: 0.2; 
+            transform: scale(0.7);
+            filter: grayscale(1);
+        }
+        .bullet.defeated {
+            border-color: #ff6b6b;
+            box-shadow: 0 0 15px rgba(255,50,50,0.3);
+        }
+        .bullet.special {
+            border-color: #ffd700;
+            box-shadow: 0 0 15px rgba(255,215,0,0.3);
+        }
+        .bullet.critical {
+            border-color: #ff00ff;
+            box-shadow: 0 0 25px rgba(255,0,255,0.5);
+            animation: pulse-critical 0.5s ease-in-out;
+        }
+        .bullet.auto-pass {
+            border-color: #00ff88;
+            box-shadow: 0 0 30px rgba(0,255,136,0.6);
+            animation: pulse-auto 0.8s ease-in-out infinite;
+        }
+
+        @keyframes pulse-critical {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.5); }
+        }
+
+        @keyframes pulse-auto {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(0,255,136,0.6); }
+            50% { transform: scale(1.2); box-shadow: 0 0 50px rgba(0,255,136,0.9); }
+        }
+
+        .action-grid {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 10px 0 6px;
+        }
+        .btn {
+            background: #1f1f32;
+            border: 2px solid #3f3f5a;
+            color: #dbdbff;
+            padding: 12px 16px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 11px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.08s linear;
+            box-shadow: 0 4px 0 #0b0b12;
+            flex: 1;
+            text-align: center;
+            letter-spacing: 0.5px;
+            min-height: 44px;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+        }
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #0b0b12;
+        }
+        .btn:hover {
+            background: #2c2c44;
+            border-color: #5f5f8a;
+        }
+        .btn:disabled {
+            opacity: 0.3;
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #0b0b12;
+            pointer-events: none;
+        }
+        .btn-small {
+            font-size: 10px;
+            padding: 8px 10px;
+            min-height: 36px;
+        }
+
+        .question-card {
+            background: #191926;
+            border: 2px solid #3b3b58;
+            padding: 16px 14px;
+            border-radius: 24px;
+            margin: 12px 0;
+            box-shadow: inset 0 0 30px #0a0a12;
+        }
+        .question-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #dedeff;
+            margin-bottom: 14px;
+            word-break: break-word;
+        }
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .option-btn {
+            background: #1b1b2e;
+            border: 2px solid #3b3b5a;
+            padding: 10px 6px;
+            border-radius: 24px;
+            color: #cfcfff;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            cursor: pointer;
+            transition: 0.06s;
+            box-shadow: 0 3px 0 #0b0b12;
+            text-align: center;
+            min-height: 40px;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+        }
+        .option-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #0b0b12;
+        }
+        .option-btn.correct-glow {
+            background: #1f5f2f;
+            border-color: #6fcf6f;
+        }
+        .option-btn.wrong-glow {
+            background: #5f1f1f;
+            border-color: #cf4f4f;
+        }
+        .option-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .timer {
+            height: 6px;
+            background: #2f2f44;
+            border-radius: 16px;
+            margin: 10px 0 4px;
+            overflow: hidden;
+        }
+        .timer-fill {
+            height: 100%;
+            background: #8f8fbf;
+            width: 100%;
+            transition: width 0.1s linear;
+        }
+
+        .interlude {
+            background: #12121f;
+            border: 2px solid #3a3a5a;
+            border-radius: 30px;
+            padding: 18px 14px;
+        }
+        .inventory-slot {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 10px 0;
+        }
+        .item-badge {
+            background: #1f1f34;
+            padding: 6px 12px;
+            border-radius: 30px;
+            border: 1px solid #4a4a6a;
+            color: #bbbbf0;
+            font-size: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+        }
+        .item-badge:active {
+            transform: scale(0.95);
+        }
+        .item-badge:hover {
+            background: #2f2f4a;
+            border-color: #6a6a8a;
+        }
+
+        .coffee-machine {
+            background: #1b1b2a;
+            border-radius: 40px;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #4a4a6a;
+            margin: 10px 0;
+        }
+        .coffee-machine .btn {
+            font-size: 10px;
+            padding: 8px 12px;
+            min-height: 36px;
+            flex: 0 1 auto;
+        }
+
+        .ask-popup {
+            background: #1a1a2e;
+            border: 2px solid #4a4a6a;
+            border-radius: 24px;
+            padding: 14px;
+            margin: 10px 0;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .ask-popup .btn {
+            flex: 0 1 auto;
+            min-width: 100px;
+            font-size: 10px;
+            padding: 8px 12px;
+            min-height: 36px;
+        }
+
+        .event-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(6px);
+            padding: 16px;
+        }
+        .event-box {
+            background: #1a1a2e;
+            border: 3px solid #4a4a7a;
+            border-radius: 30px;
+            padding: 30px 24px;
+            max-width: 460px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 0 60px rgba(100,100,200,0.2);
+        }
+        .event-box h2 {
+            font-size: 18px;
+            color: #e0e0ff;
+            margin-bottom: 12px;
+        }
+        .event-box p {
+            color: #b0b0d0;
+            font-size: 12px;
+            line-height: 1.8;
+            margin-bottom: 18px;
+            white-space: pre-line;
+        }
+        .event-box .btn {
+            padding: 12px 30px;
+            font-size: 12px;
+            min-height: 40px;
+        }
+
+        /* ЛЕГЕНДАРНОЕ ОКНО НИКОЛАЯ */
+        .event-box.legendary {
+            background: linear-gradient(135deg, #1a1a0a, #2a1a0a, #3a2a0a);
+            border-color: #ffd700;
+            box-shadow: 0 0 80px rgba(255, 215, 0, 0.3), inset 0 0 60px rgba(255, 215, 0, 0.1);
+            animation: legendary-glow 2s ease-in-out infinite;
+        }
+        .event-box.legendary h2 {
+            color: #ffd700;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+        }
+        .event-box.legendary p {
+            color: #e8d5a0;
+        }
+        .event-box.legendary .btn {
+            background: #3a2a0a;
+            border-color: #ffd700;
+            color: #ffd700;
+            box-shadow: 0 4px 0 #1a1a0a;
+        }
+        .event-box.legendary .btn:hover {
+            background: #4a3a1a;
+            border-color: #ffed4a;
+        }
+
+        @keyframes legendary-glow {
+            0%, 100% { box-shadow: 0 0 80px rgba(255, 215, 0, 0.3), inset 0 0 60px rgba(255, 215, 0, 0.1); }
+            50% { box-shadow: 0 0 120px rgba(255, 215, 0, 0.5), inset 0 0 80px rgba(255, 215, 0, 0.2); }
+        }
+
+        .exam-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            background: #151521;
+            border-radius: 24px;
+            border: 1px solid #2a2a3a;
+            margin: 6px 0;
+            font-size: 10px;
+            color: #8a8aaa;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .exam-info span {
+            color: #bbbbdd;
+        }
+
+        .teacher-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 16px;
+            font-size: 9px;
+            background: #2a2a4a;
+        }
+
+        .notification-container {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 300px;
+            pointer-events: none;
+            width: calc(100% - 20px);
+        }
+
+        .notification {
+            padding: 12px 16px;
+            border-radius: 14px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            color: white;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+            animation: slideIn 0.4s ease-out, fadeOut 0.4s ease-in 2.2s forwards;
+            pointer-events: auto;
+            border: 2px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            word-break: break-word;
+        }
+
+        .notification.success {
+            background: rgba(34, 139, 34, 0.92);
+            border-color: #2ecc71;
+            text-shadow: 0 0 20px rgba(46, 204, 113, 0.5);
+        }
+        .notification.error {
+            background: rgba(139, 34, 34, 0.92);
+            border-color: #e74c3c;
+            text-shadow: 0 0 20px rgba(231, 76, 60, 0.5);
+        }
+        .notification.critical {
+            background: rgba(139, 34, 139, 0.92);
+            border-color: #ff00ff;
+            text-shadow: 0 0 30px rgba(255, 0, 255, 0.6);
+            animation: slideIn 0.4s ease-out, pulse-critical-notification 0.5s ease-in-out 1.5s, fadeOut 0.4s ease-in 2.6s forwards;
+        }
+        .notification.event {
+            background: rgba(139, 69, 19, 0.92);
+            border-color: #f39c12;
+            text-shadow: 0 0 20px rgba(243, 156, 18, 0.5);
+        }
+        .notification.auto-pass {
+            background: rgba(0, 180, 100, 0.92);
+            border-color: #00ff88;
+            text-shadow: 0 0 30px rgba(0, 255, 136, 0.6);
+            animation: slideIn 0.4s ease-out, pulse-auto-notification 0.5s ease-in-out 1.5s, fadeOut 0.4s ease-in 2.6s forwards;
+        }
+        .notification.nikolay {
+            background: linear-gradient(135deg, #3a2a0a, #5a3a1a);
+            border-color: #ffd700;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            animation: slideIn 0.4s ease-out, legendary-pulse 1s ease-in-out 1.5s, fadeOut 0.4s ease-in 2.6s forwards;
+        }
+        .notification.sleep {
+            background: rgba(100, 80, 180, 0.92);
+            border-color: #9a7aff;
+            text-shadow: 0 0 30px rgba(154, 122, 255, 0.5);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.8); }
+        }
+
+        @keyframes pulse-critical-notification {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); border-color: #ff69b4; }
+        }
+
+        @keyframes pulse-auto-notification {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); border-color: #00ff88; }
+        }
+
+        @keyframes legendary-pulse {
+            0%, 100% { transform: scale(1); border-color: #ffd700; }
+            50% { transform: scale(1.1); border-color: #ffed4a; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        .combo-counter {
+            display: inline-block;
+            background: #2a1a3a;
+            padding: 2px 10px;
+            border-radius: 16px;
+            border: 1px solid #6a3a7a;
+            color: #ddaaff;
+            font-size: 10px;
+            margin-left: 4px;
+        }
+        .combo-counter.active {
+            border-color: #ff00ff;
+            box-shadow: 0 0 20px rgba(255,0,255,0.3);
+            animation: pulse-combo 0.6s ease-in-out infinite;
+        }
+
+        @keyframes pulse-combo {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .menu-title {
+            font-size: 22px;
+            text-align: center;
+            margin: 16px 0 8px;
+        }
+        .menu-subtitle {
+            font-size: 14px;
+            text-align: center;
+            color: #9f9fcf;
+            margin-bottom: 24px;
+        }
+        .menu-btn {
+            padding: 16px 30px;
+            font-size: 16px;
+            min-height: 50px;
+        }
+
+        .gameover-title {
+            font-size: 32px;
+            color: #cf3f3f;
+            text-shadow: 0 0 20px #8f0000;
+        }
+        .win-title {
+            font-size: 28px;
+            color: #8fcf8f;
+            text-shadow: 0 0 20px #1f7f1f;
+        }
+
+        .nikolay-emoji {
+            font-size: 48px;
+            display: block;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 600px) {
+            #game-container { padding: 10px 10px 14px; border-radius: 16px; }
+            .options { grid-template-columns: 1fr; gap: 6px; }
+            .btn { font-size: 10px; padding: 10px 12px; min-height: 38px; }
+            .portrait { font-size: 10px; padding: 8px 6px; }
+            .heart { font-size: 16px; }
+            .event-box { padding: 20px 16px; margin: 10px; }
+            .event-box h2 { font-size: 16px; }
+            .event-box p { font-size: 11px; }
+            .question-text { font-size: 13px; }
+            .option-btn { font-size: 9px; padding: 8px 6px; min-height: 34px; }
+            .exam-info { font-size: 9px; padding: 4px 8px; }
+            .notification { font-size: 9px; padding: 10px 14px; max-width: 260px; }
+            .menu-title { font-size: 18px; }
+            .menu-subtitle { font-size: 12px; }
+            .menu-btn { font-size: 14px; padding: 14px 24px; min-height: 44px; }
+            .gameover-title { font-size: 26px; }
+            .win-title { font-size: 22px; }
+            .bullet { width: 24px; height: 24px; }
+            .hp-label { font-size: 10px; min-width: 50px; }
+            .coffee-machine .btn { font-size: 9px; padding: 6px 10px; min-height: 30px; }
+            .ask-popup .btn { font-size: 9px; padding: 6px 10px; min-height: 30px; min-width: 80px; }
+            .item-badge { font-size: 9px; padding: 4px 10px; }
+        }
+
+        @media (max-width: 400px) {
+            #game-container { padding: 6px 6px 10px; border-radius: 12px; }
+            .btn { font-size: 9px; padding: 8px 8px; min-height: 32px; border-radius: 30px; }
+            .question-text { font-size: 11px; }
+            .option-btn { font-size: 8px; padding: 6px 4px; min-height: 30px; }
+            .bullet { width: 20px; height: 20px; }
+            .heart { font-size: 14px; }
+            .hp-label { font-size: 9px; min-width: 40px; }
+            .portrait { font-size: 9px; padding: 6px 4px; }
+            .menu-title { font-size: 16px; }
+            .menu-btn { font-size: 12px; padding: 12px 16px; min-height: 38px; }
+            .exam-info { font-size: 8px; padding: 3px 6px; gap: 2px; }
+            .notification { font-size: 8px; padding: 8px 12px; max-width: 200px; }
+        }
+
+        @media (orientation: landscape) and (max-height: 500px) {
+            #game-container { max-width: 600px; padding: 8px 12px 12px; }
+            .hp-container { padding: 2px 8px; gap: 4px; }
+            .heart { font-size: 14px; }
+            .hp-label { font-size: 9px; min-width: 40px; }
+            .portrait { font-size: 9px; padding: 4px 6px; }
+            .bullet { width: 20px; height: 20px; }
+            .magazine { padding: 6px; gap: 4px; margin: 4px 0; }
+            .btn { font-size: 9px; padding: 6px 10px; min-height: 28px; }
+            .question-text { font-size: 11px; margin-bottom: 8px; }
+            .option-btn { font-size: 8px; padding: 4px 6px; min-height: 28px; }
+            .question-card { padding: 10px 10px; margin: 6px 0; }
+            .exam-info { font-size: 8px; padding: 2px 6px; margin: 2px 0; }
+        }
+    </style>
+</head>
+<body>
+<div id="game-container">
+    <!-- МЕНЮ -->
+    <div id="menu-screen" class="screen">
+        <h1 class="menu-title pixel-glitch">СЕССИЯ МИИТА</h1>
+        <h2 class="menu-subtitle">последний рубеж</h2>
+        <div style="text-align: center; margin: 20px 0;">
+            <button id="btn-start-game" class="btn menu-btn">НАЧАТЬ СЕССИЮ</button>
+        </div>
+        <div style="color:#5a5a7a;text-align:center;font-size:10px;margin-top:20px;">VHS · PS1 · МИИТ 2026</div>
+    </div>
+
+    <!-- ЭКЗАМЕН -->
+    <div id="exam-screen" class="screen hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;">
+            <span id="exam-title" style="color:#b0b0dd;font-size:12px;">БЕЗРЯКОВ</span>
+            <span id="turn-indicator" style="color:#b0b0dd;font-size:11px;background:#1a1a2a;padding:4px 12px;border-radius:30px;">ХОД ИГРОКА</span>
+        </div>
+
+        <div class="hp-container">
+            <span class="hp-label">💚 СТУДЕНТ</span>
+            <div class="hearts" id="player-hearts"></div>
+        </div>
+        <div class="hp-container">
+            <span class="hp-label">❤️‍🔥 ПРЕПОД</span>
+            <div class="hearts" id="teacher-hearts"></div>
+        </div>
+
+        <div class="arena">
+            <div class="portrait">👨‍🏫 <span id="teacher-name-label">Безряков</span><br><span style="font-size:9px;color:#7a7a9a;" id="teacher-subtitle">«по полочкам»</span></div>
+            <div class="portrait">🧑‍🎓 СТУДЕНТ<br><span style="font-size:9px;color:#7a7a9a;" id="student-hp-label">4HP</span></div>
+        </div>
+
+        <div class="exam-info">
+            <span>🎫 Билеты: <span id="tickets-left">6</span></span>
+            <span>❤️ HP: <span id="teacher-hp-display">3</span></span>
+            <span>💰 <span id="stipendia-exam-display">0</span></span>
+            <span class="teacher-badge" id="teacher-event-badge">⚡</span>
+            <span class="combo-counter" id="combo-display">🔥 x0</span>
+        </div>
+
+        <div id="magazine-container" class="magazine"></div>
+
+        <div id="question-area" class="question-card hidden">
+            <div id="question-text" class="question-text">Вопрос?</div>
+            <div id="options-container" class="options"></div>
+            <div class="timer"><div id="timer-fill" class="timer-fill"></div></div>
+        </div>
+
+        <div id="ask-popup" class="ask-popup hidden">
+            <span style="color:#b0b0dd;width:100%;text-align:center;font-size:11px;">Кто будет отвечать?</span>
+            <button id="ask-player-answer" class="btn btn-small">🧑‍🎓 Я</button>
+            <button id="ask-teacher-answer" class="btn btn-small">👨‍🏫 Препод</button>
+            <button id="ask-cancel" class="btn btn-small" style="background:#2a1a1a;border-color:#5a3a3a;">↩️</button>
+        </div>
+
+        <div id="action-area" class="action-grid">
+            <button id="btn-pull-self" class="btn">🎫 Тянуть</button>
+            <button id="btn-ask-teacher" class="btn">👨‍🏫 Спросить</button>
+            <button id="btn-use-item" class="btn btn-small" style="flex:0.4;">🎒</button>
+        </div>
+        <div id="message-area" style="min-height:28px;color:#b0b0d0;font-size:11px;margin-top:6px;text-align:center;"></div>
+    </div>
+
+    <!-- ИНТЕРЛЮДИЯ -->
+    <div id="interlude-screen" class="screen hidden interlude">
+        <h2 style="text-align:center;font-size:16px;">☕ КОРИДОР</h2>
+        <div style="text-align:center;color:#7f7faf;margin:6px 0;font-size:12px;">Стипендия: <span id="stipendia-display">0</span></div>
+        <div class="inventory-slot" id="inventory-slots"></div>
+        <div class="coffee-machine">
+            <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;">
+                <button class="btn item-buy" data-item="energy">⚡ Энергетик (5)</button>
+                <button class="btn item-buy" data-item="shpargalka">🔭 Шпорга (6)</button>
+                <button class="btn item-buy" data-item="chocolate">🍫 Шоколад (8)</button>
+                <button class="btn item-buy" data-item="friend">📞 Друг (7)</button>
+                <button class="btn item-buy" data-item="pere">📄 Заявл. (9)</button>
+                <button class="btn item-buy" data-item="med">💊 Мед (6)</button>
+            </div>
+        </div>
+        <div style="margin:8px 0;">
+            <input id="cheat-sheet-input" placeholder="тема шпаргалки..." style="width:100%;padding:8px 12px;background:#1c1c2e;border:2px solid #3f3f5f;color:#ddd;border-radius:30px;font-family:monospace;font-size:11px;">
+        </div>
+        <button id="btn-next-exam" class="btn" style="width:100%;font-size:12px;padding:12px;">➡️ ДАЛЬШЕ</button>
+    </div>
+
+    <!-- ПОРАЖЕНИЕ -->
+    <div id="gameover-screen" class="screen hidden" style="text-align:center;padding:20px 10px;">
+        <h1 class="gameover-title">ОТЧИСЛЕН</h1>
+        <div style="font-size:18px;margin:16px 0;color:#7f7f9f;">зачётка разорвана</div>
+        <button id="btn-retry" class="btn" style="padding:14px 30px;font-size:14px;">🔄 УЙТИ В АРМИЮ</button>
+    </div>
+
+    <!-- ПОБЕДА -->
+    <div id="win-screen" class="screen hidden" style="text-align:center;padding:20px 10px;">
+        <h1 class="win-title">СЕССИЯ ЗАКРЫТА</h1>
+        <div style="font-size:16px;margin:12px 0;color:#bfbfdf;">🎓 Стипендия сохранена</div>
+        <button id="btn-ngplus" class="btn" style="padding:14px 30px;font-size:14px;">🍺 НАПИТЬСЯ</button>
+    </div>
+</div>
+
+<div id="event-overlay-container"></div>
+<div class="notification-container" id="notification-container"></div>
+
+<script>
+    (function(){
+        // --------------------------------------------------------------
+        //  БАЗА ДАННЫХ ВОПРОСОВ
+        // --------------------------------------------------------------
+        const QUESTIONS_DB = [
+            // РЫЖКОВ
+            { id:1, difficulty:'green', category:'Рыжков', question:'Что означает зелёный сигнал на светофоре?', options:['Путь свободен','Стой','Скорость 40','Внимание'], correct:0 },
+            { id:2, difficulty:'green', category:'Рыжков', question:'Допустимая ширина колеи в РФ?', options:['1435 мм','1520 мм','1540 мм','1600 мм'], correct:1 },
+            { id:3, difficulty:'green', category:'Рыжков', question:'Основной вид тяги на ж/д?', options:['Электрическая','Дизельная','Паровая','Гидравлическая'], correct:0 },
+            { id:4, difficulty:'green', category:'Рыжков', question:'Что такое железнодорожный транспорт?', options:['Вид транспорта','Инфраструктура','Система управления','Все варианты'], correct:3 },
+            { id:5, difficulty:'yellow', category:'Рыжков', question:'Что такое пропускная способность?', options:['Максимальный поток','Скорость движения','Количество полос','Грузоподъёмность'], correct:0 },
+            { id:6, difficulty:'yellow', category:'Рыжков', question:'Что такое транспортная сеть?', options:['Совокупность дорог','Система маршрутов','Инфраструктура','Все варианты'], correct:3 },
+            { id:7, difficulty:'red', category:'Рыжков', question:'Какой вид тяги самый эффективный?', options:['Электрическая','Дизельная','Гибридная','Магнитная'], correct:0 },
+            { id:8, difficulty:'red', category:'Рыжков', question:'Что такое транспортный узел?', options:['Стык маршрутов','Пересадочный пункт','Ключевой элемент сети','Все варианты'], correct:3 },
+            { id:38, difficulty:'yellow', category:'Рыжков', question:'Что такое грузопоток?', options:['Количество грузов','Скорость доставки','Интенсивность потока','Все варианты'], correct:2 },
+            { id:39, difficulty:'red', category:'Рыжков', question:'Что такое логистика в транспорте?', options:['Управление цепями','Оптимизация','Транспортный процесс','Все варианты'], correct:3 },
+            { id:40, difficulty:'green', category:'Рыжков', question:'Какой вид транспорта самый быстрый?', options:['Железнодорожный','Автомобильный','Воздушный','Водный'], correct:2 },
+            { id:41, difficulty:'yellow', category:'Рыжков', question:'Что такое интермодальные перевозки?', options:['Один вид транспорта','Комбинированные','Внутренние','Все варианты'], correct:1 },
+
+            // КОРОЛЁВА
+            { id:9, difficulty:'green', category:'Королёва', question:'Что такое безопасность?', options:['Отсутствие угроз','Состояние защищённости','Система мер','Все варианты'], correct:1 },
+            { id:10, difficulty:'green', category:'Королёва', question:'Что такое техносфера?', options:['Природная среда','Искусственная среда','Космическое пространство','Биосфера'], correct:1 },
+            { id:11, difficulty:'green', category:'Королёва', question:'Что такое производственная среда?', options:['Место работы','Совокупность факторов','Цех','Все варианты'], correct:1 },
+            { id:12, difficulty:'yellow', category:'Королёва', question:'Что такое ПДК?', options:['Предельная доза','Предельно допустимая концентрация','Предел допустимого','Порог действия'], correct:1 },
+            { id:13, difficulty:'yellow', category:'Королёва', question:'Что такое риск?', options:['Вероятность опасности','Мера опасности','Оценка ущерба','Все варианты'], correct:0 },
+            { id:14, difficulty:'yellow', category:'Королёва', question:'Что такое авария?', options:['Небольшое происшествие','Разрушение сооружений','Внезапный выход из строя','Все варианты'], correct:2 },
+            { id:15, difficulty:'red', category:'Королёва', question:'Что такое клиническая смерть?', options:['Остановка сердца','Остановка дыхания','Обратимое состояние','Все варианты'], correct:2 },
+            { id:16, difficulty:'red', category:'Королёва', question:'Что такое шок?', options:['Критическое состояние','Реакция на травму','Нарушение кровообращения','Все варианты'], correct:3 },
+            { id:17, difficulty:'red', category:'Королёва', question:'Что такое сердечно-легочная реанимация?', options:['Массаж сердца','Искусственное дыхание','Комплекс мер','Все варианты'], correct:2 },
+            { id:42, difficulty:'yellow', category:'Королёва', question:'Что такое промышленная безопасность?', options:['Защита на производстве','Охрана труда','Предотвращение аварий','Все варианты'], correct:3 },
+            { id:43, difficulty:'green', category:'Королёва', question:'Что такое первая помощь?', options:['Комплекс простейших мер','Стационарное лечение','Диагностика','Все варианты'], correct:0 },
+            { id:44, difficulty:'red', category:'Королёва', question:'Что такое токсикология?', options:['Наука о ядах','Лечение отравлений','Влияние токсинов','Все варианты'], correct:3 },
+
+            // ЕФИМОВ
+            { id:18, difficulty:'yellow', category:'Ефимов', question:'Что такое дерево отказов?', options:['Метод анализа','Графическая модель','Система безопасности','Все варианты'], correct:3 },
+            { id:19, difficulty:'yellow', category:'Ефимов', question:'Что такое информационная безопасность?', options:['Защита данных','Конфиденциальность','Целостность','Все варианты'], correct:3 },
+            { id:20, difficulty:'red', category:'Ефимов', question:'Что такое политика безопасности?', options:['Стратегия','Набор правил','Система мер','Все варианты'], correct:3 },
+            { id:21, difficulty:'red', category:'Ефимов', question:'Что такое компьютерный вирус?', options:['Программа','Вредоносный код','Самовоспроизведение','Все варианты'], correct:3 },
+            { id:22, difficulty:'yellow', category:'Ефимов', question:'Что такое аутентификация?', options:['Проверка подлинности','Идентификация','Авторизация','Шифрование'], correct:0 },
+            { id:23, difficulty:'red', category:'Ефимов', question:'Что такое криптография?', options:['Шифрование данных','Кодирование','Защита','Все варианты'], correct:3 },
+            { id:45, difficulty:'yellow', category:'Ефимов', question:'Что такое брандмауэр?', options:['Сетевой экран','Антивирус','Огненная стена','Все варианты'], correct:0 },
+            { id:46, difficulty:'red', category:'Ефимов', question:'Что такое SSL-сертификат?', options:['Шифрование сайта','Идентификация','Безопасное соединение','Все варианты'], correct:3 },
+            { id:47, difficulty:'yellow', category:'Ефимов', question:'Что такое двухфакторная аутентификация?', options:['Два пароля','Два этапа проверки','Ключи безопасности','Все варианты'], correct:1 },
+            { id:48, difficulty:'red', category:'Ефимов', question:'Что такое эксплойт?', options:['Уязвимость','Программа-атака','Отказ в обслуживании','Все варианты'], correct:1 },
+            { id:49, difficulty:'green', category:'Ефимов', question:'Что такое пароль?', options:['Секретное слово','Ключ доступа','Авторизация','Все варианты'], correct:3 },
+            { id:50, difficulty:'red', category:'Ефимов', question:'Что такое кибербезопасность?', options:['Защита от кибератак','Информационная защита','Безопасность данных','Все варианты'], correct:3 },
+
+            // ДАНИЛИНА
+            { id:24, difficulty:'green', category:'Данилина', question:'Что такое предприятие?', options:['Организация','Юридическое лицо','Производственная единица','Все варианты'], correct:3 },
+            { id:25, difficulty:'green', category:'Данилина', question:'Что такое прибыль?', options:['Выручка','Разница доходов и расходов','Затраты','Инвестиции'], correct:1 },
+            { id:26, difficulty:'green', category:'Данилина', question:'Что такое основные средства?', options:['Здания и оборудование','Оборотные средства','Трудовые ресурсы','Нематериальные активы'], correct:0 },
+            { id:27, difficulty:'yellow', category:'Данилина', question:'Что такое амортизация?', options:['Износ','Перенос стоимости','Обесценивание','Все варианты'], correct:3 },
+            { id:28, difficulty:'yellow', category:'Данилина', question:'Что такое себестоимость?', options:['Затраты на производство','Цена товара','Прибыль','Налоги'], correct:0 },
+            { id:29, difficulty:'yellow', category:'Данилина', question:'Что такое рентабельность?', options:['Прибыль/выручка','Прибыль/себестоимость','Выручка/активы','Прибыль/инвестиции'], correct:1 },
+            { id:30, difficulty:'red', category:'Данилина', question:'Что такое оборотный капитал?', options:['Денежные средства','Запасы','Краткосрочные активы','Все варианты'], correct:3 },
+            { id:31, difficulty:'red', category:'Данилина', question:'Что такое производительность труда?', options:['Выработка','Трудоёмкость','Эффективность','Все варианты'], correct:3 },
+            { id:51, difficulty:'yellow', category:'Данилина', question:'Что такое маржинальность?', options:['Разница цены и себестоимости','Прибыль на единицу','Рентабельность','Все варианты'], correct:3 },
+            { id:52, difficulty:'red', category:'Данилина', question:'Что такое инвестиции?', options:['Вложения','Капиталовложения','Развитие','Все варианты'], correct:3 },
+            { id:53, difficulty:'green', category:'Данилина', question:'Что такое валовый доход?', options:['Общий доход','Прибыль','Выручка','Чистая прибыль'], correct:0 },
+            { id:54, difficulty:'red', category:'Данилина', question:'Что такое диверсификация?', options:['Разнообразие','Распределение рисков','Расширение','Все варианты'], correct:3 },
+
+            // БЕЗРЯКОВ
+            { id:32, difficulty:'green', category:'Безряков', question:'Сколько аэропортов в Москве?', options:['3','4','5','6'], correct:1 },
+            { id:33, difficulty:'yellow', category:'Безряков', question:'Какой аэропорт самый большой в Москве?', options:['Шереметьево','Домодедово','Внуково','Жуковский'], correct:0 },
+            { id:34, difficulty:'red', category:'Безряков', question:'Что такое код ICAO?', options:['Код аэропорта','Код авиакомпании','Код страны','Код маршрута'], correct:0 },
+            { id:35, difficulty:'yellow', category:'Безряков', question:'Какой аэропорт Москвы самый старый?', options:['Внуково','Шереметьево','Домодедово','Быково'], correct:0 },
+            { id:36, difficulty:'green', category:'Безряков', question:'Что такое авиационное топливо?', options:['Керосин','Бензин','Дизель','Спирт'], correct:0 },
+            { id:37, difficulty:'red', category:'Безряков', question:'Что такое MRO в авиации?', options:['Техобслуживание','Управление полётами','Безопасность','Регистрация'], correct:0 },
+            { id:55, difficulty:'yellow', category:'Безряков', question:'Что такое ATC в авиации?', options:['Диспетчерская служба','Управление полётами','Безопасность','Все варианты'], correct:3 },
+            { id:56, difficulty:'green', category:'Безряков', question:'Что такое бортпроводник?', options:['Стюардесса','Экипаж','Обслуживание пассажиров','Все варианты'], correct:3 },
+            { id:57, difficulty:'red', category:'Безряков', question:'Что такое авионика?', options:['Бортовое оборудование','Электроника','Управление','Все варианты'], correct:3 },
+            { id:58, difficulty:'yellow', category:'Безряков', question:'Какой шум производит самолёт при взлёте?', options:['Рёв','Гул','Свист','Все варианты'], correct:0 },
+            { id:59, difficulty:'green', category:'Безряков', question:'Что такое взлётная полоса?', options:['Место для взлёта','Покрытие','Длина','Все варианты'], correct:3 },
+            { id:60, difficulty:'red', category:'Безряков', question:'Что такое чёрный ящик?', options:['Бортовой самописец','Коробка','Регистратор','Все варианты'], correct:0 },
+
+            // ЧЕРЕПАНОВ
+            { id:101, difficulty:'green', category:'Черепанов', question:'Любишь маму?', options:['Да','Конечно'], correct:0 },
+            { id:102, difficulty:'green', category:'Черепанов', question:'А папу любишь?', options:['Да','Естественно'], correct:0 },
+            { id:103, difficulty:'green', category:'Черепанов', question:'А Россию?', options:['Да','Безусловно'], correct:0 },
+            { id:104, difficulty:'green', category:'Черепанов', question:'Студент, ты готов?', options:['Всегда готов','Так точно'], correct:0 },
+            { id:105, difficulty:'green', category:'Черепанов', question:'Хочешь сдать экзамен?', options:['Да','Хочу'], correct:0 },
+            { id:106, difficulty:'green', category:'Черепанов', question:'У тебя есть стипендия?', options:['Да','Пока да'], correct:0 },
+            { id:107, difficulty:'green', category:'Черепанов', question:'Веришь в себя?', options:['Да','Конечно'], correct:0 },
+            { id:108, difficulty:'green', category:'Черепанов', question:'Любишь МИИТ?', options:['Да','Очень'], correct:0 },
+            { id:109, difficulty:'green', category:'Черепанов', question:'Хочешь стать профессионалом?', options:['Да','Мечтаю'], correct:0 },
+            { id:110, difficulty:'green', category:'Черепанов', question:'Будешь учиться?', options:['Да','Обязательно'], correct:0 },
+        ];
+
+        // --------------------------------------------------------------
+        //  СОСТОЯНИЕ
+        // --------------------------------------------------------------
+        const state = {
+            playerHP: 4,
+            maxPlayerHP: 4,
+            stipendia: 0,
+            inventory: [],
+            currentMagazine: [],
+            currentQuestionIndex: 0,
+            isPlayerTurn: true,
+            teacherHP: 3,
+            teacherName: 'Безряков',
+            teacherPassiveUsed: false,
+            examOrder: [],
+            currentExamIndex: 0,
+            examTeachers: ['Безряков','Королёва','Ефимов','Данилина','Рыжков','Черепанов'],
+            teacherPassives: ['bezryakov','koroleva','efimov','danilina','ryzhkov','cherepanov'],
+            teacherHPList: [3,4,5,5,4,2],
+            teacherSubtitles: {
+                'Безряков': '«по полочкам»',
+                'Королёва': '«с огоньком»',
+                'Ефимов': '«запутанный»',
+                'Данилина': '«экономичная»',
+                'Рыжков': '«транспортный»',
+                'Черепанов': '«душевный»'
+            },
+            gameOver: false,
+            waitingForAnswer: false,
+            timerInterval: null,
+            timerValue: 10,
+            currentQuestion: null,
+            cheatSheetTopic: '',
+            _lastAction: null,
+            _questionPool: [],
+            _danilinaPool: [],
+            _aviationPool: [],
+            _efimovPool: [],
+            _ryzhkovPool: [],
+            _cherepanovPool: [],
+            _bezryakovBonusAsked: false,
+            _askMode: false,
+            _processingAnswer: false,
+            _efimovSkipped: false,
+            _efimovChecked: false,
+            _itemsUsed: [],
+            _danilinaEvent: false,
+            _danilinaOriginalHP: 5,
+            _comboCount: 0,
+            _criticalHit: false,
+            _autoPassTriggered: false,
+            _nikolayTriggered: false,
+            _sleepNextExam: false,
+        };
+
+        // --------------------------------------------------------------
+        //  УВЕДОМЛЕНИЯ (PUSH)
+        // --------------------------------------------------------------
+        function showNotification(message, type = 'success', duration = 2500) {
+            const container = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, duration);
+        }
+
+        function showCriticalNotification(message) {
+            showNotification('💥 ' + message, 'critical', 3000);
+            const container = document.getElementById('game-container');
+            container.style.animation = 'none';
+            setTimeout(() => {
+                container.style.animation = 'shake 0.3s ease-in-out';
+            }, 10);
+            setTimeout(() => {
+                container.style.animation = '';
+            }, 400);
+        }
+
+        // --------------------------------------------------------------
+        //  РАБОТА С БАЗОЙ
+        // --------------------------------------------------------------
+        function shuffleArray(arr) {
+            const copy = [...arr];
+            for (let i = copy.length-1; i>0; i--) {
+                const j = Math.floor(Math.random()*(i+1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        function resetQuestionPools() {
+            state._questionPool = QUESTIONS_DB.map(q => ({...q}));
+            state._questionPool = shuffleArray(state._questionPool);
+            state._danilinaPool = state._questionPool.filter(q => q.category === 'Данилина').map(q => ({...q}));
+            state._danilinaPool = shuffleArray(state._danilinaPool);
+            state._aviationPool = state._questionPool.filter(q => q.category === 'Безряков').map(q => ({...q}));
+            state._aviationPool = shuffleArray(state._aviationPool);
+            state._efimovPool = state._questionPool.filter(q => q.category === 'Ефимов').map(q => ({...q}));
+            state._efimovPool = shuffleArray(state._efimovPool);
+            state._ryzhkovPool = state._questionPool.filter(q => q.category === 'Рыжков').map(q => ({...q}));
+            state._ryzhkovPool = shuffleArray(state._ryzhkovPool);
+            state._cherepanovPool = state._questionPool.filter(q => q.category === 'Черепанов').map(q => ({...q}));
+            state._cherepanovPool = shuffleArray(state._cherepanovPool);
+        }
+
+        function pickQuestionsForTeacher(examIndex) {
+            const teacher = state.examTeachers[examIndex];
+            let pool;
+            if (teacher === 'Безряков') pool = state._aviationPool;
+            else if (teacher === 'Ефимов') pool = state._efimovPool;
+            else if (teacher === 'Рыжков') pool = state._ryzhkovPool;
+            else if (teacher === 'Черепанов') pool = state._cherepanovPool;
+            else pool = state._questionPool.filter(q => q.category === teacher);
+            
+            if (!pool || pool.length === 0) {
+                pool = state._questionPool.filter(q => q.category === 'Рыжков');
+            }
+            if (!pool || pool.length === 0) {
+                pool = QUESTIONS_DB.map(q => ({...q}));
+            }
+            const shuffled = shuffleArray(pool);
+            const count = Math.floor(Math.random() * 4) + 4;
+            return shuffled.slice(0, Math.min(count, shuffled.length));
+        }
+
+        function pickAviationQuestion() {
+            const pool = state._aviationPool || [];
+            return pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
+        }
+
+        function getDanilinaQuestions(count) {
+            const pool = state._danilinaPool || [];
+            return shuffleArray(pool).slice(0, count);
+        }
+
+        // --------------------------------------------------------------
+        //  ЛОГИКА ЭКЗАМЕНОВ
+        // --------------------------------------------------------------
+        function getTeacherHP(examIndex) {
+            if (examIndex < 0 || examIndex >= state.teacherHPList.length) return 3;
+            const baseHP = state.teacherHPList[examIndex] || 3;
+            const name = getTeacherName(examIndex);
+            if (name === 'Данилина' && state._danilinaEvent) return baseHP * 2;
+            return baseHP;
+        }
+
+        function getTeacherName(examIndex) {
+            if (examIndex < 0 || examIndex >= state.examTeachers.length) return 'Препод';
+            return state.examTeachers[examIndex] || 'Препод';
+        }
+
+        function getPassive(examIndex) {
+            if (examIndex < 0 || examIndex >= state.teacherPassives.length) return 'none';
+            return state.teacherPassives[examIndex] || 'none';
+        }
+
+        function getTeacherSubtitle(name) {
+            return state.teacherSubtitles[name] || '«просто»';
+        }
+
+        function shuffleExamOrder() {
+            let order = [0,1,2,3,4,5];
+            const shuffled = shuffleArray(order);
+            const hasCherepanov = Math.random() < 0.1;
+            if (!hasCherepanov) {
+                const filtered = shuffled.filter(idx => idx !== 5);
+                return shuffleArray(filtered).slice(0, 4);
+            }
+            const withCherepanov = shuffleArray(shuffled);
+            const result = withCherepanov.slice(0, 4);
+            if (!result.includes(5)) {
+                result[0] = 5;
+                shuffleArray(result);
+            }
+            return result;
+        }
+
+        function loadMagazineForExam(examIndex) {
+            const teacher = state.examTeachers[examIndex];
+            let mag = [];
+
+            if (teacher === 'Данилина') {
+                const count = Math.floor(Math.random() * 3) + 5;
+                mag = getDanilinaQuestions(count);
+                mag = mag.map(q => ({...q, difficulty: q.difficulty || 'red'}));
+            } else {
+                mag = pickQuestionsForTeacher(examIndex);
+                while (mag.length < 4) {
+                    const extra = state._questionPool.filter(q => q.category !== teacher);
+                    if (extra.length === 0) break;
+                    const pick = extra[Math.floor(Math.random() * extra.length)];
+                    mag.push({...pick});
+                }
+                mag = shuffleArray(mag);
+            }
+            return mag;
+        }
+
+        // --------------------------------------------------------------
+        //  ПРОВЕРКА АВТОСДАЧИ (0.5%)
+        // --------------------------------------------------------------
+        function checkAutoPass() {
+            if (Math.random() < 0.005) {
+                state._autoPassTriggered = true;
+                return true;
+            }
+            return false;
+        }
+
+        // --------------------------------------------------------------
+        //  ВСПЛЫВАЮЩИЕ ОКНА
+        // --------------------------------------------------------------
+        function showEventWindow(title, message, buttonText, callback, legendary = false) {
+            const container = document.getElementById('event-overlay-container');
+            const overlay = document.createElement('div');
+            overlay.className = 'event-overlay';
+            overlay.innerHTML = `
+                <div class="event-box ${legendary ? 'legendary' : ''}">
+                    <h2>${title}</h2>
+                    <p>${message}</p>
+                    <button class="btn" id="event-btn">${buttonText || 'Понятно'}</button>
+                </div>
+            `;
+            container.appendChild(overlay);
+            document.getElementById('event-btn').addEventListener('click', function() {
+                container.innerHTML = '';
+                if (callback) callback();
+            });
+        }
+
+        // --------------------------------------------------------------
+        //  ПОЯВЛЕНИЕ НИКОЛАЯ (10%)
+        // --------------------------------------------------------------
+        function checkNikolay(callback) {
+            // 10% шанс появления
+            if (Math.random() < 0.10 && !state._nikolayTriggered) {
+                state._nikolayTriggered = true;
+                
+                // 3% шанс что студент проспит следующий экзамен
+                const willSleep = Math.random() < 0.03;
+                let sleepText = '';
+                if (willSleep) {
+                    sleepText = '\n\n😴 ВНИМАНИЕ: Есть 3% шанс, что вы проспите следующий экзамен!';
+                    state._sleepNextExam = true;
+                }
+                
+                showEventWindow(
+                    '🍻 ЛЕГЕНДАРНЫЙ НИКОЛАЙ!',
+                    `Ваш друг Николай подходит после экзамена:\n"Студент, ты молодец! Давай отметим!"\n\n🍺 Выпить с Николаем? +2 HP и +5 стипендии!${sleepText}`,
+                    '🍺 Пойти с Николаем',
+                    function() {
+                        state.playerHP = Math.min(state.maxPlayerHP, state.playerHP + 2);
+                        state.stipendia += 5;
+                        
+                        if (willSleep) {
+                            showNotification('😴 Вы выпили с Николаем! +2 HP, +5 стипендии! Но есть шанс проспать...', 'nikolay', 3500);
+                        } else {
+                            showNotification('🍻 Выпили с Николаем! +2 HP, +5 стипендии!', 'nikolay', 3000);
+                        }
+                        
+                        updateHP();
+                        document.getElementById('stipendia-display').textContent = state.stipendia;
+                        if (callback) callback();
+                    },
+                    true // Легендарное окно
+                );
+                return true;
+            }
+            return false;
+        }
+
+        // --------------------------------------------------------------
+        //  ПРОВЕРКА ПРОСЫПАНИЯ ЭКЗАМЕНА (3%)
+        // --------------------------------------------------------------
+        function checkSleepExam(callback) {
+            if (state._sleepNextExam) {
+                state._sleepNextExam = false;
+                if (Math.random() < 0.03) {
+                    // 3% - проспал экзамен
+                    showEventWindow(
+                        '😴 ПРОСПАЛ ЭКЗАМЕН!',
+                        'Вы так хорошо отметили с Николаем, что проспали следующий экзамен!\nПреподаватель поставил вам автомат... наверное, из жалости.',
+                        '😅 Ой...',
+                        function() {
+                            showNotification('😴 Вы проспали экзамен! Но вам поставили автомат!', 'sleep', 3000);
+                            // Пропускаем экзамен
+                            state.currentExamIndex++;
+                            if (state.currentExamIndex >= state.examOrder.length) {
+                                endGame(true);
+                                return;
+                            }
+                            if (callback) callback();
+                        }
+                    );
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // --------------------------------------------------------------
+        //  ОТРИСОВКА
+        // --------------------------------------------------------------
+        function renderHearts() {
+            const playerContainer = document.getElementById('player-hearts');
+            playerContainer.innerHTML = '';
+            for (let i = 0; i < state.maxPlayerHP; i++) {
+                const span = document.createElement('span');
+                span.className = 'heart ' + (i < state.playerHP ? 'alive' : 'dead');
+                span.textContent = '♥';
+                playerContainer.appendChild(span);
+            }
+
+            const teacherContainer = document.getElementById('teacher-hearts');
+            teacherContainer.innerHTML = '';
+            const maxT = getTeacherHP(state.examOrder[state.currentExamIndex] ?? 0);
+            for (let i = 0; i < maxT; i++) {
+                const span = document.createElement('span');
+                span.className = 'heart ' + (i < state.teacherHP ? 'alive' : 'dead');
+                span.textContent = '♥';
+                teacherContainer.appendChild(span);
+            }
+
+            document.getElementById('student-hp-label').textContent = state.playerHP + 'HP';
+            document.getElementById('teacher-hp-display').textContent = state.teacherHP;
+            document.getElementById('stipendia-exam-display').textContent = state.stipendia;
+            
+            const badge = document.getElementById('teacher-event-badge');
+            if (state._danilinaEvent && state.teacherName === 'Данилина') {
+                badge.textContent = '😤 НЕ В НАСТРОЕНИИ!';
+                badge.style.background = '#5a1a1a';
+            } else {
+                badge.textContent = '⚡';
+                badge.style.background = '#2a2a4a';
+            }
+
+            const comboDisplay = document.getElementById('combo-display');
+            comboDisplay.textContent = `🔥 x${state._comboCount}`;
+            if (state._comboCount >= 2) {
+                comboDisplay.classList.add('active');
+            } else {
+                comboDisplay.classList.remove('active');
+            }
+        }
+
+        function updateHP() { renderHearts(); }
+
+        function renderMagazine() {
+            const container = document.getElementById('magazine-container');
+            container.innerHTML = '';
+            const mag = state.currentMagazine;
+            const total = mag.length;
+            const answered = state.currentQuestionIndex;
+            
+            mag.forEach((q, idx) => {
+                const div = document.createElement('div');
+                let diff = q.difficulty || 'green';
+                if (q.category === 'Черепанов') diff = 'special';
+                div.className = `bullet ${diff}`;
+                if (idx < answered) div.classList.add('used');
+                if (idx === answered && state.teacherHP <= 0) div.classList.add('defeated');
+                if (idx === answered && state._criticalHit) div.classList.add('critical');
+                if (state._autoPassTriggered && idx === 0) div.classList.add('auto-pass');
+                container.appendChild(div);
+            });
+
+            document.getElementById('tickets-left').textContent = Math.max(0, total - answered);
+        }
+
+        function setMessage(msg) {
+            document.getElementById('message-area').textContent = msg;
+        }
+
+        function showScreen(screenId) {
+            ['menu-screen','exam-screen','interlude-screen','gameover-screen','win-screen'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        // --------------------------------------------------------------
+        //  ТАЙМЕР
+        // --------------------------------------------------------------
+        function startTimer(seconds, onEnd) {
+            stopTimer();
+            state.timerValue = seconds;
+            const fill = document.getElementById('timer-fill');
+            fill.style.width = '100%';
+            state.timerInterval = setInterval(() => {
+                state.timerValue -= 0.1;
+                const pct = Math.max(0, (state.timerValue / seconds)*100);
+                fill.style.width = pct+'%';
+                if (state.timerValue <= 0) {
+                    stopTimer();
+                    if (onEnd) onEnd();
+                }
+            }, 100);
+        }
+
+        function stopTimer() {
+            if (state.timerInterval) {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+            }
+        }
+
+        // --------------------------------------------------------------
+        //  ОТРИСОВКА ВОПРОСА
+        // --------------------------------------------------------------
+        function displayQuestion(questionData) {
+            state.currentQuestion = questionData;
+            const qa = document.getElementById('question-area');
+            qa.classList.remove('hidden');
+            document.getElementById('question-text').textContent = questionData.question;
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            if (questionData.options) {
+                questionData.options.forEach((txt, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-btn';
+                    btn.textContent = txt;
+                    btn.dataset.index = idx;
+                    btn.addEventListener('click', (e) => {
+                        if (!state.waitingForAnswer || state._processingAnswer) return;
+                        handleAnswer(parseInt(e.target.dataset.index));
+                    });
+                    container.appendChild(btn);
+                });
+            }
+            state.waitingForAnswer = true;
+            state._processingAnswer = false;
+            updateUI();
+            startTimer(10, () => {
+                if (state.waitingForAnswer && !state._processingAnswer) {
+                    handleAnswer(-1);
+                }
+            });
+        }
+
+        // --------------------------------------------------------------
+        //  ПРОДВИЖЕНИЕ ИГРЫ
+        // --------------------------------------------------------------
+        function advanceGame() {
+            if (state.gameOver) return;
+
+            if (state.currentQuestionIndex >= state.currentMagazine.length) {
+                if (state.teacherHP > 0) {
+                    setMessage('❌ Билеты кончились! Вы проиграли');
+                    showNotification('💀 Билеты кончились! Препод победил!', 'error');
+                    state.playerHP = 0;
+                    updateHP();
+                    endGame(false);
+                    return;
+                } else {
+                    examPassed();
+                    return;
+                }
+            }
+
+            if (state.isPlayerTurn) {
+                document.getElementById('turn-indicator').textContent = 'ХОД ИГРОКА';
+                renderMagazine();
+                updateUI();
+                return;
+            }
+
+            document.getElementById('turn-indicator').textContent = 'ХОД ПРЕПОДА';
+            const q = state.currentMagazine[state.currentQuestionIndex];
+            state.currentQuestionIndex++;
+
+            let mistakeChance = q.difficulty === 'green' ? 0.7 : (q.difficulty === 'yellow' ? 0.5 : 0.2);
+            if (q.category === 'Черепанов') mistakeChance = 1.0;
+            const teacherMistake = Math.random() < mistakeChance;
+
+            if (teacherMistake) {
+                state.teacherHP = Math.max(0, state.teacherHP - 1);
+                setMessage('🤖 Препод ошибся! Он теряет HP');
+                showNotification('🎓 Препод ошибся! -1 HP', 'success');
+                state.stipendia += 1;
+            } else {
+                state.playerHP = Math.max(0, state.playerHP - 1);
+                setMessage('🤖 Препод ответил верно. Вы теряете HP');
+                showNotification('📖 Препод ответил верно! -1 HP', 'error');
+            }
+
+            updateHP();
+
+            if (state.playerHP <= 0) { endGame(false); return; }
+            if (state.teacherHP <= 0) { examPassed(); return; }
+
+            state.isPlayerTurn = true;
+            renderMagazine();
+            setMessage('Ваш ход');
+            document.getElementById('turn-indicator').textContent = 'ХОД ИГРОКА';
+            updateUI();
+        }
+
+        // --------------------------------------------------------------
+        //  ОБРАБОТКА ОТВЕТА
+        // --------------------------------------------------------------
+        function handleAnswer(selectedIndex) {
+            if (!state.waitingForAnswer || state._processingAnswer) return;
+            state._processingAnswer = true;
+            state.waitingForAnswer = false;
+            stopTimer();
+
+            const q = state.currentQuestion;
+            if (!q) {
+                state._processingAnswer = false;
+                return;
+            }
+
+            let isCorrect = (selectedIndex === q.correct);
+            let correctAnswer = (selectedIndex !== -1 && isCorrect);
+            
+            if (q.category === 'Черепанов') {
+                isCorrect = true;
+                correctAnswer = true;
+            }
+
+            const btns = document.querySelectorAll('.option-btn');
+            btns.forEach((b, i) => {
+                b.disabled = true;
+                if (i === q.correct) b.classList.add('correct-glow');
+                else if (i === selectedIndex && !correctAnswer) b.classList.add('wrong-glow');
+            });
+
+            const isPlayerAnswering = state._lastAction === 'player' || state._lastAction === 'ask_player';
+            let damageTarget = null;
+            let isCritical = false;
+            let damageAmount = 1;
+
+            if (isPlayerAnswering) {
+                if (correctAnswer) {
+                    damageTarget = 'teacher';
+                    state.stipendia += 2;
+                    showNotification('✅ Правильно! +2', 'success');
+                    setMessage('✅ Правильно! Препод теряет HP');
+                    
+                    state._comboCount++;
+                    if (state._comboCount >= 2) {
+                        isCritical = true;
+                        damageAmount = 2;
+                        showCriticalNotification('КРИТИЧЕСКИЙ УДАР! -2 HP!');
+                        setMessage('💥 КРИТИЧЕСКИЙ УДАР! -2 HP!');
+                        state._criticalHit = true;
+                    } else {
+                        state._criticalHit = false;
+                    }
+                } else {
+                    damageTarget = 'player';
+                    damageAmount = 1;
+                    setMessage('❌ Неправильно! -1 HP');
+                    showNotification('❌ Неправильно! -1 HP', 'error');
+                    state._comboCount = 0;
+                    state._criticalHit = false;
+                }
+            } else if (state._lastAction === 'ask_teacher') {
+                if (state._itemsUsed.includes('friend')) {
+                    const idx = state._itemsUsed.indexOf('friend');
+                    state._itemsUsed.splice(idx, 1);
+                    damageTarget = 'teacher';
+                    damageAmount = 1;
+                    setMessage('📞 Друг помог! -1 HP');
+                    showNotification('📞 Друг помог! -1 HP', 'success');
+                    state.stipendia += 1;
+                    state._comboCount = 0;
+                    state._criticalHit = false;
+                } else {
+                    let mistakeChance = q.difficulty === 'green' ? 0.7 : (q.difficulty === 'yellow' ? 0.5 : 0.2);
+                    if (q.category === 'Черепанов') mistakeChance = 1.0;
+                    const teacherMistake = Math.random() < mistakeChance;
+                    if (teacherMistake) {
+                        damageTarget = 'teacher';
+                        damageAmount = 1;
+                        setMessage('🎓 Препод ошибся! -1 HP');
+                        showNotification('🎓 Препод ошибся! -1 HP', 'success');
+                        state.stipendia += 1;
+                        state._comboCount = 0;
+                        state._criticalHit = false;
+                    } else {
+                        damageTarget = 'player';
+                        damageAmount = 1;
+                        setMessage('📖 Препод ответил верно! -1 HP');
+                        showNotification('📖 Препод ответил верно! -1 HP', 'error');
+                        state._comboCount = 0;
+                        state._criticalHit = false;
+                    }
+                }
+            } else {
+                if (correctAnswer) {
+                    damageTarget = 'teacher';
+                    state.stipendia += 2;
+                    showNotification('✅ Правильно! +2', 'success');
+                    setMessage('✅ Правильно! Препод теряет HP');
+                    
+                    state._comboCount++;
+                    if (state._comboCount >= 2) {
+                        isCritical = true;
+                        damageAmount = 2;
+                        showCriticalNotification('КРИТИЧЕСКИЙ УДАР! -2 HP!');
+                        setMessage('💥 КРИТИЧЕСКИЙ УДАР! -2 HP!');
+                        state._criticalHit = true;
+                    } else {
+                        state._criticalHit = false;
+                    }
+                } else {
+                    damageTarget = 'player';
+                    damageAmount = 1;
+                    setMessage('❌ Неправильно! -1 HP');
+                    showNotification('❌ Неправильно! -1 HP', 'error');
+                    state._comboCount = 0;
+                    state._criticalHit = false;
+                }
+            }
+
+            const passive = getPassive(state.examOrder[state.currentExamIndex]);
+            const hasShield = state._itemsUsed.includes('shield');
+            if (hasShield && damageTarget === 'player') {
+                const idx = state._itemsUsed.indexOf('shield');
+                state._itemsUsed.splice(idx, 1);
+                setMessage('🛡️ Шпаргалка защитила!');
+                showNotification('🛡️ Шпаргалка защитила!', 'event');
+                damageTarget = null;
+                state._comboCount = 0;
+                state._criticalHit = false;
+            }
+
+            if (damageTarget === 'player') {
+                state.playerHP = Math.max(0, state.playerHP - damageAmount);
+                updateHP();
+
+                if (state.playerHP <= 0) {
+                    state._processingAnswer = false;
+                    endGame(false);
+                    return;
+                }
+
+                if (passive === 'bezryakov' && !state.teacherPassiveUsed) {
+                    state.teacherPassiveUsed = true;
+                    state.playerHP = Math.min(state.maxPlayerHP, state.playerHP + 1);
+                    setMessage('🔄 Безряков дал шанс! +1 HP');
+                    showNotification('🔄 Безряков дал шанс! +1 HP', 'event');
+                    updateHP();
+                }
+
+                state.isPlayerTurn = false;
+                state._lastAction = null;
+                state._processingAnswer = false;
+                document.getElementById('question-area').classList.add('hidden');
+                setTimeout(() => advanceGame(), 400);
+                return;
+            }
+
+            if (damageTarget === 'teacher') {
+                state.teacherHP = Math.max(0, state.teacherHP - damageAmount);
+                updateHP();
+
+                if (isCritical) renderMagazine();
+
+                if (state.teacherHP <= 0) {
+                    state._processingAnswer = false;
+                    document.getElementById('question-area').classList.add('hidden');
+                    examPassed();
+                    return;
+                }
+
+                state.isPlayerTurn = true;
+                state._lastAction = null;
+                state._processingAnswer = false;
+                document.getElementById('question-area').classList.add('hidden');
+                setTimeout(() => advanceGame(), 400);
+                return;
+            }
+
+            state.isPlayerTurn = true;
+            state._lastAction = null;
+            state._processingAnswer = false;
+            document.getElementById('question-area').classList.add('hidden');
+            setTimeout(() => advanceGame(), 400);
+        }
+
+        // --------------------------------------------------------------
+        //  СПЕЦИАЛЬНЫЙ ОБРАБОТЧИК ДЛЯ ВОПРОСА О ПРОПУСКАХ
+        // --------------------------------------------------------------
+        function handlePropusk(selectedIndex) {
+            if (!state.waitingForAnswer || state._processingAnswer) return;
+            state._processingAnswer = true;
+            state.waitingForAnswer = false;
+            stopTimer();
+
+            if (selectedIndex >= 0 && selectedIndex <= 2) {
+                setMessage('⭐ Безряков: «5 автоматом!»');
+                showNotification('⭐ Безряков поставил 5!', 'success');
+                state.teacherHP = 0;
+                updateHP();
+                state._processingAnswer = false;
+                document.getElementById('question-area').classList.add('hidden');
+                setTimeout(() => examPassed(), 400);
+                return;
+            } else if (selectedIndex === 3 || selectedIndex === 4) {
+                const aviaQ = pickAviationQuestion();
+                if (aviaQ) {
+                    setMessage('✈️ Безряков задаёт вопрос по авиации');
+                    state._lastAction = 'player';
+                    state._processingAnswer = false;
+                    displayQuestion(aviaQ);
+                    return;
+                } else {
+                    setMessage('⭐ Безряков: «Ладно, 5 автоматом»');
+                    showNotification('⭐ Безряков поставил 5!', 'success');
+                    state.teacherHP = 0;
+                    updateHP();
+                    state._processingAnswer = false;
+                    document.getElementById('question-area').classList.add('hidden');
+                    setTimeout(() => examPassed(), 400);
+                    return;
+                }
+            } else {
+                state.playerHP = Math.max(0, state.playerHP - 1);
+                setMessage('❌ Таймаут! -1 HP');
+                showNotification('❌ Таймаут! -1 HP', 'error');
+                updateHP();
+                state._processingAnswer = false;
+                document.getElementById('question-area').classList.add('hidden');
+                if (state.playerHP <= 0) { endGame(false); return; }
+                state.isPlayerTurn = true;
+                state._lastAction = null;
+                setTimeout(() => advanceGame(), 400);
+            }
+        }
+
+        // --------------------------------------------------------------
+        //  ИСПОЛЬЗОВАНИЕ ПРЕДМЕТОВ
+        // --------------------------------------------------------------
+        function useItem(itemType) {
+            const idx = state.inventory.indexOf(itemType);
+            if (idx === -1) {
+                setMessage('Нет такого предмета!');
+                return;
+            }
+
+            state.inventory.splice(idx, 1);
+            renderInventory();
+
+            switch(itemType) {
+                case 'energy':
+                    state.playerHP = Math.min(state.maxPlayerHP, state.playerHP + 1);
+                    setMessage('⚡ +1 HP');
+                    showNotification('⚡ +1 HP', 'success');
+                    break;
+                case 'chocolate':
+                    state.playerHP = Math.min(state.maxPlayerHP, state.playerHP + 2);
+                    setMessage('🍫 +2 HP');
+                    showNotification('🍫 +2 HP', 'success');
+                    break;
+                case 'med':
+                    state.playerHP = Math.min(state.maxPlayerHP, state.playerHP + 3);
+                    setMessage('💊 +3 HP');
+                    showNotification('💊 +3 HP', 'success');
+                    break;
+                case 'shpargalka':
+                    setMessage('🔭 Шпаргалка активирована!');
+                    showNotification('🔭 Шпаргалка активирована!', 'event');
+                    state._itemsUsed.push('shield');
+                    break;
+                case 'friend':
+                    setMessage('📞 Друг на связи!');
+                    showNotification('📞 Друг на связи!', 'event');
+                    state._itemsUsed.push('friend');
+                    break;
+                case 'pere':
+                    if (state.teacherHP > 0) {
+                        state.teacherHP = Math.max(0, state.teacherHP - 1);
+                        setMessage('📄 Заявление сработало! -1 HP');
+                        showNotification('📄 Заявление сработало! -1 HP', 'success');
+                        updateHP();
+                        if (state.teacherHP <= 0) { examPassed(); return; }
+                    }
+                    break;
+                default:
+                    setMessage('Неизвестный предмет');
+            }
+            updateHP();
+            renderInventory();
+            updateUI();
+        }
+
+        function showUseItemPopup() {
+            if (state.inventory.length === 0) {
+                setMessage('Инвентарь пуст!');
+                return;
+            }
+            
+            const container = document.getElementById('ask-popup');
+            const itemIcons = { energy:'⚡', shpargalka:'🔭', chocolate:'🍫', friend:'📞', pere:'📄', med:'💊' };
+            
+            container.innerHTML = `
+                <span style="color:#b0b0dd;width:100%;text-align:center;font-size:11px;">Выберите предмет:</span>
+                ${state.inventory.map(item => 
+                    `<button class="btn btn-small use-item-btn" data-item="${item}">${itemIcons[item] || ''} ${item}</button>`
+                ).join('')}
+                <button class="btn btn-small" id="use-item-cancel" style="background:#2a1a1a;border-color:#5a3a3a;">↩️</button>
+            `;
+            container.classList.remove('hidden');
+
+            container.querySelectorAll('.use-item-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    container.classList.add('hidden');
+                    useItem(btn.dataset.item);
+                    setTimeout(() => updateUI(), 100);
+                });
+            });
+
+            document.getElementById('use-item-cancel').addEventListener('click', () => {
+                container.classList.add('hidden');
+                updateUI();
+            });
+        }
+
+        // --------------------------------------------------------------
+        //  ЭКЗАМЕН СДАН
+        // --------------------------------------------------------------
+        function examPassed() {
+            state._processingAnswer = false;
+            state.waitingForAnswer = false;
+            state._askMode = false;
+            state._lastAction = null;
+            state._comboCount = 0;
+            state._criticalHit = false;
+            state._autoPassTriggered = false;
+            stopTimer();
+            
+            document.getElementById('question-area').classList.add('hidden');
+            document.getElementById('ask-popup').classList.add('hidden');
+
+            const idx = state.examOrder[state.currentExamIndex];
+            const name = getTeacherName(idx);
+
+            showNotification(`🎉 ${name} сдан!`, 'success', 3000);
+            setMessage(`🎉 Экзамен ${name} сдан!`);
+            state.currentExamIndex++;
+
+            if (state.currentExamIndex >= state.examOrder.length) {
+                endGame(true);
+                return;
+            }
+
+            // Проверяем появление Николая (10%)
+            if (!checkNikolay(() => {
+                showScreen('interlude-screen');
+                state.teacherPassiveUsed = false;
+                state._bezryakovBonusAsked = false;
+                state._danilinaEvent = false;
+                state._efimovChecked = false;
+                document.getElementById('stipendia-display').textContent = state.stipendia;
+                renderInventory();
+                updateUI();
+            })) {
+                showScreen('interlude-screen');
+                state.teacherPassiveUsed = false;
+                state._bezryakovBonusAsked = false;
+                state._danilinaEvent = false;
+                state._efimovChecked = false;
+                document.getElementById('stipendia-display').textContent = state.stipendia;
+                renderInventory();
+                updateUI();
+            }
+        }
+
+        // --------------------------------------------------------------
+        //  КОНЕЦ ИГРЫ
+        // --------------------------------------------------------------
+        function endGame(win) {
+            state.gameOver = true;
+            state._comboCount = 0;
+            state._criticalHit = false;
+            state._autoPassTriggered = false;
+            state._sleepNextExam = false;
+            stopTimer();
+            state.waitingForAnswer = false;
+            state._processingAnswer = false;
+            state._askMode = false;
+            document.getElementById('ask-popup').classList.add('hidden');
+            document.getElementById('question-area').classList.add('hidden');
+            
+            if (win) {
+                showNotification('🏆 СЕССИЯ ЗАКРЫТА! 🎉', 'success', 4000);
+                showScreen('win-screen');
+                resetQuestionPools();
+            } else {
+                showNotification('💀 ОТЧИСЛЕН!', 'error', 4000);
+                showScreen('gameover-screen');
+            }
+        }
+
+        // --------------------------------------------------------------
+        //  ЗАПУСК ЭКЗАМЕНА
+        // --------------------------------------------------------------
+        function startExam() {
+            state.gameOver = false;
+            state._processingAnswer = false;
+            state.waitingForAnswer = false;
+            state._askMode = false;
+            state._comboCount = 0;
+            state._criticalHit = false;
+            state._autoPassTriggered = false;
+            document.getElementById('ask-popup').classList.add('hidden');
+
+            if (state.currentExamIndex >= state.examOrder.length) {
+                endGame(true);
+                return;
+            }
+
+            const idx = state.examOrder[state.currentExamIndex];
+            const name = getTeacherName(idx);
+
+            // ПРОВЕРКА ПРОСЫПАНИЯ (3%)
+            if (state._sleepNextExam) {
+                if (checkSleepExam(() => {
+                    startExam();
+                })) {
+                    return;
+                }
+            }
+
+            // ПРОВЕРКА АВТОСДАЧИ (0.5%)
+            if (checkAutoPass()) {
+                showEventWindow(
+                    '🎉 АВТОМАТ!',
+                    'Чудо произошло! Преподаватель решил поставить вам автомат без экзамена!\nЭкзамен засчитан!',
+                    'УРА!!!',
+                    function() {
+                        showNotification('🎉 АВТОМАТ! Экзамен засчитан!', 'auto-pass', 4000);
+                        state.currentExamIndex++;
+                        if (state.currentExamIndex >= state.examOrder.length) {
+                            endGame(true);
+                            return;
+                        }
+                        startExam();
+                    }
+                );
+                return;
+            }
+
+            // ПРОВЕРКА ЕФИМОВА
+            if (name === 'Ефимов' && !state._efimovChecked) {
+                state._efimovChecked = true;
+                if (Math.random() < 0.4) {
+                    state._efimovSkipped = true;
+                    showEventWindow(
+                        '📢 Ефимов не пришёл!',
+                        'Преподаватель Ефимов сегодня отсутствует.\nЭкзамен автоматически засчитан!',
+                        'Ура!',
+                        function() {
+                            showNotification('🎉 Ефимов отсутствует! Экзамен засчитан!', 'event', 3000);
+                            state.currentExamIndex++;
+                            if (state.currentExamIndex >= state.examOrder.length) {
+                                endGame(true);
+                                return;
+                            }
+                            startExam();
+                        }
+                    );
+                    return;
+                } else {
+                    state._efimovSkipped = false;
+                    showEventWindow(
+                        '😈 Ефимов здесь!',
+                        'Преподаватель Ефимов явился на экзамен.\nГотовьтесь к сложным вопросам!',
+                        'Поехали!',
+                        function() {
+                            startExamInternal(name, idx);
+                        }
+                    );
+                    return;
+                }
+            }
+
+            startExamInternal(name, idx);
+        }
+
+        function startExamInternal(name, idx) {
+            state.teacherName = name;
+            state.teacherHP = getTeacherHP(idx);
+            state.teacherPassiveUsed = false;
+            state.currentQuestionIndex = 0;
+            state.isPlayerTurn = true;
+            state.currentMagazine = loadMagazineForExam(idx);
+            state._lastAction = null;
+            state._bezryakovBonusAsked = false;
+            state._itemsUsed = [];
+            state._comboCount = 0;
+            state._criticalHit = false;
+            
+            if (state.playerHP <= 0) state.playerHP = state.maxPlayerHP;
+            
+            // Событие Данилиной "не в настроении" (30%)
+            if (name === 'Данилина' && !state._danilinaEvent && Math.random() < 0.3) {
+                state._danilinaEvent = true;
+                const originalHP = state.teacherHP;
+                state.teacherHP = originalHP * 2;
+                state._danilinaOriginalHP = originalHP;
+                showEventWindow(
+                    '😤 Данилина НЕ В НАСТРОЕНИИ!',
+                    'Она зла! Её HP увеличилось в 2 раза! Будьте осторожны!',
+                    'О нет...',
+                    () => {
+                        showNotification('😤 Данилина в ярости! HP ×2!', 'event', 3000);
+                        startExamFinal(name, idx);
+                    }
+                );
+                return;
+            }
+            
+            startExamFinal(name, idx);
+        }
+
+        function startExamFinal(name, idx) {
+            document.getElementById('exam-title').textContent = name.toUpperCase();
+            document.getElementById('teacher-name-label').textContent = name;
+            document.getElementById('teacher-subtitle').textContent = getTeacherSubtitle(name);
+            document.getElementById('turn-indicator').textContent = 'ХОД ИГРОКА';
+            document.getElementById('question-area').classList.add('hidden');
+            renderMagazine();
+            setMessage(`Начинаем экзамен: ${name}`);
+            showScreen('exam-screen');
+            updateHP();
+            updateUI();
+
+            // Безряков: вопрос о пропусках
+            if (name === 'Безряков' && !state._bezryakovBonusAsked) {
+                state._bezryakovBonusAsked = true;
+                if (Math.random() < 0.6) {
+                    const propuskQ = {
+                        id: 'propusk',
+                        difficulty: 'green',
+                        category: 'Безряков',
+                        question: 'Сколько у вас пропусков?',
+                        options: ['0','1','2','3 и больше'],
+                        correct: 0
+                    };
+                    state.currentQuestion = propuskQ;
+                    const qa = document.getElementById('question-area');
+                    qa.classList.remove('hidden');
+                    document.getElementById('question-text').textContent = propuskQ.question;
+                    const container = document.getElementById('options-container');
+                    container.innerHTML = '';
+                    propuskQ.options.forEach((txt, idx2) => {
+                        const btn = document.createElement('button');
+                        btn.className = 'option-btn';
+                        btn.textContent = txt;
+                        btn.dataset.index = idx2;
+                        btn.addEventListener('click', (e) => {
+                            if (!state.waitingForAnswer || state._processingAnswer) return;
+                            handlePropusk(parseInt(e.target.dataset.index));
+                        });
+                        container.appendChild(btn);
+                    });
+                    state.waitingForAnswer = true;
+                    state._processingAnswer = false;
+                    updateUI();
+                    startTimer(10, () => {
+                        if (state.waitingForAnswer && !state._processingAnswer) {
+                            handlePropusk(-1);
+                        }
+                    });
+                    return;
+                } else {
+                    setMessage('⭐ Безряков: «5 автоматом!»');
+                    showNotification('⭐ Безряков поставил 5!', 'success');
+                    state.teacherHP = 0;
+                    updateHP();
+                    setTimeout(() => examPassed(), 400);
+                    return;
+                }
+            }
+
+            document.getElementById('btn-pull-self').disabled = false;
+            document.getElementById('btn-ask-teacher').disabled = false;
+        }
+
+        // --------------------------------------------------------------
+        //  UI ОБНОВЛЕНИЕ
+        // --------------------------------------------------------------
+        function updateUI() {
+            const inExam = !document.getElementById('exam-screen').classList.contains('hidden');
+            if (!inExam) return;
+            
+            const btnPullSelf = document.getElementById('btn-pull-self');
+            const btnAskTeacher = document.getElementById('btn-ask-teacher');
+            const btnUseItem = document.getElementById('btn-use-item');
+
+            const mag = state.currentMagazine;
+            const allUsed = state.currentQuestionIndex >= mag.length;
+            const disabled = allUsed || !state.isPlayerTurn || state.waitingForAnswer || 
+                            state._askMode || state._processingAnswer || state.gameOver;
+            
+            btnPullSelf.disabled = disabled;
+            btnAskTeacher.disabled = disabled;
+            btnUseItem.disabled = state.inventory.length === 0 || state.waitingForAnswer || state._processingAnswer || state.gameOver;
+        }
+
+        // --------------------------------------------------------------
+        //  ДЕЙСТВИЯ ИГРОКА
+        // --------------------------------------------------------------
+        function actionPullSelf() {
+            if (state.gameOver || !state.isPlayerTurn || state.waitingForAnswer || state._processingAnswer) return;
+            if (state.currentQuestionIndex >= state.currentMagazine.length) {
+                setMessage('Нет билетов!');
+                return;
+            }
+            
+            const q = state.currentMagazine[state.currentQuestionIndex];
+            state.currentQuestionIndex++;
+            state._lastAction = 'player';
+            displayQuestion(q);
+            updateUI();
+        }
+
+        function actionAskTeacher() {
+            if (state.gameOver || !state.isPlayerTurn || state.waitingForAnswer || state._processingAnswer) return;
+            if (state.currentQuestionIndex >= state.currentMagazine.length) {
+                setMessage('Нет билетов!');
+                return;
+            }
+            state._askMode = true;
+            document.getElementById('ask-popup').classList.remove('hidden');
+            updateUI();
+            setMessage('Кто будет отвечать?');
+        }
+
+        // --------------------------------------------------------------
+        //  ИНТЕРЛЮДИЯ
+        // --------------------------------------------------------------
+        function buyItem(itemType) {
+            const prices = { energy:5, shpargalka:6, chocolate:8, friend:7, pere:9, med:6 };
+            const price = prices[itemType] || 10;
+            if (state.stipendia < price) {
+                setMessage('Не хватает стипендии');
+                showNotification('❌ Не хватает стипендии!', 'error');
+                return;
+            }
+            state.stipendia -= price;
+            state.inventory.push(itemType);
+            document.getElementById('stipendia-display').textContent = state.stipendia;
+            renderInventory();
+            setMessage(`Куплено: ${itemType}`);
+            showNotification(`🛒 Куплено: ${itemType}`, 'success');
+        }
+
+        function renderInventory() {
+            const container = document.getElementById('inventory-slots');
+            container.innerHTML = '';
+            if (state.inventory.length === 0) {
+                container.innerHTML = '<span style="color:#5a5a7a;font-size:10px;">Инвентарь пуст</span>';
+                return;
+            }
+            const icons = { energy:'⚡', shpargalka:'🔭', chocolate:'🍫', friend:'📞', pere:'📄', med:'💊' };
+            state.inventory.forEach(item => {
+                const span = document.createElement('span');
+                span.className = 'item-badge';
+                span.textContent = (icons[item] || '') + ' ' + item;
+                span.title = 'Использовать';
+                span.addEventListener('click', () => useItem(item));
+                container.appendChild(span);
+            });
+        }
+
+        // --------------------------------------------------------------
+        //  НОВАЯ ИГРА
+        // --------------------------------------------------------------
+        function startNewSession() {
+            state.currentExamIndex = 0;
+            state.playerHP = state.maxPlayerHP;
+            state.stipendia = 0;
+            state.inventory = [];
+            state.cheatSheetTopic = '';
+            state._efimovSkipped = false;
+            state._efimovChecked = false;
+            state._itemsUsed = [];
+            state._bezryakovBonusAsked = false;
+            state.teacherPassiveUsed = false;
+            state._danilinaEvent = false;
+            state.gameOver = false;
+            state.waitingForAnswer = false;
+            state._processingAnswer = false;
+            state._askMode = false;
+            state._comboCount = 0;
+            state._criticalHit = false;
+            state._autoPassTriggered = false;
+            state._nikolayTriggered = false;
+            state._sleepNextExam = false;
+            
+            state.examOrder = shuffleExamOrder();
+            resetQuestionPools();
+
+            const teacherNames = state.examOrder.map(idx => state.examTeachers[idx]);
+            showEventWindow(
+                '📋 РАСПИСАНИЕ',
+                `Вам предстоит сдать экзамены у:\n${teacherNames.join('\n')}`,
+                'Поехали!',
+                function() {
+                    startExam();
+                }
+            );
+        }
+
+        // --------------------------------------------------------------
+        //  ОБРАБОТЧИКИ СОБЫТИЙ
+        // --------------------------------------------------------------
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('btn-start-game').addEventListener('click', startNewSession);
+            document.getElementById('btn-retry').addEventListener('click', startNewSession);
+            document.getElementById('btn-ngplus').addEventListener('click', startNewSession);
+
+            document.getElementById('btn-pull-self').addEventListener('click', actionPullSelf);
+            document.getElementById('btn-ask-teacher').addEventListener('click', actionAskTeacher);
+            document.getElementById('btn-use-item').addEventListener('click', showUseItemPopup);
+
+            document.getElementById('btn-next-exam').addEventListener('click', ()=>{
+                state.cheatSheetTopic = document.getElementById('cheat-sheet-input').value.trim();
+                startExam();
+            });
+
+            document.querySelectorAll('.item-buy').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    buyItem(e.target.dataset.item);
+                });
+            });
+
+            document.getElementById('ask-player-answer').addEventListener('click', function() {
+                if (!state._askMode || state._processingAnswer) return;
+                state._askMode = false;
+                document.getElementById('ask-popup').classList.add('hidden');
+                if (state.currentQuestionIndex >= state.currentMagazine.length) {
+                    setMessage('Нет билетов!');
+                    updateUI();
+                    return;
+                }
+                const q = state.currentMagazine[state.currentQuestionIndex];
+                state.currentQuestionIndex++;
+                state._lastAction = 'ask_player';
+                displayQuestion(q);
+                updateUI();
+            });
+
+            document.getElementById('ask-teacher-answer').addEventListener('click', function() {
+                if (!state._askMode || state._processingAnswer) return;
+                state._askMode = false;
+                document.getElementById('ask-popup').classList.add('hidden');
+                if (state.currentQuestionIndex >= state.currentMagazine.length) {
+                    setMessage('Нет билетов!');
+                    updateUI();
+                    return;
+                }
+                const q = state.currentMagazine[state.currentQuestionIndex];
+                state.currentQuestionIndex++;
+                state._lastAction = 'ask_teacher';
+                
+                if (state._itemsUsed.includes('friend')) {
+                    const idx = state._itemsUsed.indexOf('friend');
+                    state._itemsUsed.splice(idx, 1);
+                    state.teacherHP = Math.max(0, state.teacherHP - 1);
+                    setMessage('📞 Друг помог! -1 HP');
+                    showNotification('📞 Друг помог! -1 HP', 'success');
+                    updateHP();
+                    if (state.teacherHP <= 0) { examPassed(); return; }
+                    state.isPlayerTurn = true;
+                    renderMagazine();
+                    setMessage('Ваш ход');
+                    document.getElementById('turn-indicator').textContent = 'ХОД ИГРОКА';
+                    updateUI();
+                    return;
+                }
+                
+                let mistakeChance = q.difficulty === 'green' ? 0.7 : (q.difficulty === 'yellow' ? 0.5 : 0.2);
+                if (q.category === 'Черепанов') mistakeChance = 1.0;
+                const teacherMistake = Math.random() < mistakeChance;
+                if (teacherMistake) {
+                    state.teacherHP = Math.max(0, state.teacherHP - 1);
+                    setMessage('📉 Препод ошибся! -1 HP');
+                    showNotification('🎓 Препод ошибся! -1 HP', 'success');
+                    state.stipendia += 1;
+                    state._comboCount = 0;
+                    state._criticalHit = false;
+                } else {
+                    state.playerHP = Math.max(0, state.playerHP - 1);
+                    setMessage('📈 Препод ответил верно! -1 HP');
+                    showNotification('📖 Препод ответил верно! -1 HP', 'error');
+                    state._comboCount = 0;
+                    state._criticalHit = false;
+                }
+                updateHP();
+                if (state.playerHP <= 0) { endGame(false); return; }
+                if (state.teacherHP <= 0) { examPassed(); return; }
+                state.isPlayerTurn = true;
+                renderMagazine();
+                setMessage('Ваш ход');
+                document.getElementById('turn-indicator').textContent = 'ХОД ИГРОКА';
+                updateUI();
+            });
+
+            document.getElementById('ask-cancel').addEventListener('click', function() {
+                state._askMode = false;
+                document.getElementById('ask-popup').classList.add('hidden');
+                setMessage('Отменено');
+                updateUI();
+            });
+
+            resetQuestionPools();
+            state.examOrder = shuffleExamOrder();
+            showScreen('menu-screen');
+        });
+    })();
+</script>
+</body>
+</html>
